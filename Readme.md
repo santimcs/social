@@ -1,16 +1,22 @@
 cd\ruby
+
 rails new social
+
 cd social
+
 git init
+
 rails generate resource User name email
 rake db:migrate
+
 rails g model Subscription leader:references follower:references
 rake db:migrate
+
 ## app/models/subscription.rb
-belongs_to :leader, class_name: 'User'
+  belongs_to :leader, class_name: 'User'
   belongs_to :follower, class_name: 'User'
 
-  ## app/models/user.rb
+## app/models/user.rb
   has_many :subscriptions, foreign_key: :follower_id, dependent: :destroy
   has_many :leaders, through: :subscriptions
 
@@ -50,3 +56,10 @@ validates :body, presence: true
 
 rails g resource Comment body:text post:references user:references  
 rake db:migrate
+
+git add .
+git commit -m "initial commit version"
+
+## create repository social on github
+git remote add origin https://github.com/santimcs/social.git
+git push -u origin master
