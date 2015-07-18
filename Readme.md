@@ -116,3 +116,177 @@ git commit -m "initial commit version"
 git remote add origin https://github.com/santimcs/social.git
 
 git push -u origin master
+
+## Chapter 9 Authentication
+
+## gemfile
+gem 'bootstrap-sass'
+
+bundle install
+
+## app/assets/stylesheets/application.css
+*= require bootstrap
+
+## app/assets/javascripts/application.js
+//= require bootstrap
+
+## app/views/layouts/application.html.erb
+<div class="container">
+
+  <%= yield %>
+
+</div>
+
+## app/controllers/posts_controller.rb
+def index
+    @posts = Post.all
+end
+
+def show
+    @post = Post.find(params[:id])
+end
+
+## create app/views/posts/index.html.erb
+<div class="page-header">
+
+  <h1>Home</h1>
+
+</div>
+
+<%= render @posts %>
+
+## create app/views/text_posts/_text_post.html.erb
+<div class="panel panel-heading">
+
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+
+      <%= text_post.title %>
+
+    </h3>
+
+  </div>
+
+  <div class="panel-body">
+    <p>
+      <em>
+        By <%= text_post.user.name %>
+      </em>
+    </p>
+
+    <%= text_post.body %>
+  </div>
+</div>
+
+## create app/views/image_posts/_image_post.html.erb
+<div class="panel panel-heading">
+
+  <div class="panel-heading">
+
+    <h3 class="panel-title">
+
+      <%= image_post.title %>
+
+    </h3>
+
+  </div>
+
+  rails server
+
+  <div class="panel-body">
+  
+    <p>
+      <em>
+        By <%= image_post.user.name %>
+      </em>
+    </p>
+
+    <%= image_tag image_post.url, class: "img-responsive" %>
+
+    <%= image_post.body %>
+
+  </div>
+
+</div>
+  
+## create app/views/posts/show.html.erb
+<div class="page-header">
+
+  <h1>Post</h1>
+
+</div>
+
+<%= render @post %>
+
+<%= link_to "Home", posts_path, class: "btn btn-default" %>
+
+# modify gemfile
+gem 'bcrypt', '~> 3.1.7'
+
+bundle install
+
+rails g migration AddPasswordDigestToUsers password_digest
+
+## edit app/models/user.rb
+has_secure_password
+
+  validates :email, presence: true, uniqueness: true
+
+## edit config/routes.rb
+get 'signup', to: 'users#new', as: 'signup'
+
+  root 'posts#index'  
+
+##  app/views/users/new.html.erb
+
+## app/views/layouts/application.html.erb
+
+rails g controller Sessions
+
+## edit config/routes.rb
+  resources :sessions
+
+## create app/views/sessions/new.html.erb
+
+## edit app/controllers/sessions_controller.rb
+
+## edit app/controllers/application _controller.rb
+  private
+
+  def current_user
+    if session[:user_id]
+       @current_user ||= User.find(session[:user_id])
+    end
+  end
+  helper_method :current_user
+
+## edit app/views/layouts/application.html.erb
+  <div class="pull-right">
+      <% if current_user %>
+        <%= link_to 'Log Out', logout_path %>
+      <% else %>
+        <%= link_to 'Log In', login_path %> or
+        <%= link_to 'Sign Up', signup_path %>
+      <% end %>
+    </div>
+
+## edit app/controllers/application_controller.rb      
+  def authenticate_user!
+    redirect_to login_path unless current_user
+  end
+
+## eidt app/controllers/posts_controller.rb
+  before_action :authenticate_user!
+
+## edit app/models/user.rb
+  def timeline_user_ids
+     leader_ids + [id]
+  end
+
+## edit app/controllers/posts_controller.rb
+  user_ids = current_user.timeline_user_ids
+  
+  @posts = Post.where(user_id: user_ids)
+             .order("created_at DESC")
+
